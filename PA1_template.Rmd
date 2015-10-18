@@ -20,7 +20,7 @@ Set path to the folder clonned from github and unzip data.
 ## Read test data
 read data into R   
 ```{r}
-   data_a <- read.csv("activity.csv", header = TRUE,  colClasses = c("integer", "Date", "factor"))
+   data_a <- read.csv("activity.csv", header = TRUE,  colClasses = c("integer", "Date", "character"))
    str(data_a)
    summary(data_a)
 ```   
@@ -67,18 +67,21 @@ print(median_steps)
 ## What is the average daily activity pattern?
 ```{r}
 
-data_agr2 <- aggregate(x=list(avg_steps=data_a$steps), by=list(interval=data_a$interval), FUN=mean, na.rm=TRUE)
+data_agr1 <- aggregate(x=list(avg_steps=data_a$steps), by=list(interval=data_a$interval), FUN=mean, na.rm=TRUE)
+data_agr1$interval <- as.numeric(as.character(data_agr1$interval))
 
 ```
 
 Creating a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 ```{r}
-ggplot(data=data_agr2, aes(intervaal, avg_steps)) +
+plot_d1<- ggplot(data=data_agr1, aes(interval, avg_steps, group = 2)) +
+    geom_point()+
     geom_line() +
+##    geom_histogram (stat='identity', binwidth = 0.01)+
     xlab("5-minute interval") +
-    ylab("average number of steps taken") +
-    ggtitle("Time Series of activity per day")
+    ylab("average number of steps taken")
+##    ggtitle("Time Series of activity per day")
     ##    theme_bw ()
 print(plot_d1)
 ```
@@ -86,7 +89,7 @@ Answerinfg question - Which 5-minute interval, on average across all the days in
 
 ```{r}
 library(dplyr)
-max_interval<- filter(data_agr1, avg_day==max(avg_day))
+max_interval<- filter(data_agr1, avg_steps==max(avg_steps))
 max_interval
 
 ```
@@ -110,7 +113,7 @@ na_val
 data_full <- data_a 
 for (i in 1:nrow(data_full)) {
     if (is.na(data_full$steps[i])) {
-        data_full$steps[i] <- data_agr1[which(data_full$interval[i] == data_agr1$interval),]$avg_day
+        data_full$steps[i] <- data_agr1[which(data_full$interval[i] == data_agr1$interval),]$avg_steps
     }
 }
 
@@ -159,7 +162,8 @@ data_full$day <- ifelse(as.POSIXlt(data_full$date)$wday %in% c(0,6), 'weekend', 
 
 ```{r}
 data_agr3 <- aggregate(steps ~ interval + day, data=data_full, mean)
-plot_d4 <- ggplot(data_agr3, aes(interval, steps)) + 
+data_agr3$interval <- as.numeric(as.character(data_agr3$interval))
+plot_d4 <- ggplot(data_agr3, aes(interval, steps, group=2)) + 
     geom_line() + 
     facet_grid(day ~ .) +
     xlab("5-minute interval") + 
